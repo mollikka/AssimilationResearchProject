@@ -28,16 +28,13 @@ def explore():
                 print(item)
                 try:
                     results = watcher.get_search_targeting_from_query_dataframe(item)
+                    for result in results['name'].str.encode('utf-8'):
+                        next_set.add(unicode(result, 'utf-8'))
                     visited_set.add(item)
-                    for result in results['name']:
-                        try:
-                            next_set.add(unicode(result, 'utf-8'))
-                        except TypeError:
-                            next_set.add(result)
                 except KeyboardInterrupt:
                     raise
-                except:
-                    pass
+                except Exception as error:
+                    print("ERROR:",error)
             running_set.add_from(next_set)
             next_set.clear()
             if running_set.is_empty():
