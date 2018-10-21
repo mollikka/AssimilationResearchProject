@@ -11,11 +11,12 @@ def explore():
 
     last_update = time()
 
-    visited_set = PersistentSet('visited.txt')
-    running_set = PersistentSet('running.txt',{'Science'})
-    next_set = PersistentSet('next.txt')
+    visited_set = PersistentSet('discovery/visited.txt')
+    running_set = PersistentSet('discovery/running.txt',{'Science'})
+    next_set = PersistentSet('discovery/next.txt')
     while True:
         try:
+            running_set.remove_from(visited_set)
             for item in running_set:
                 if time() > last_update + autosave_every_N_seconds:
                     last_update = time()
@@ -38,20 +39,20 @@ def explore():
                 except:
                     pass
             running_set.add_from(next_set)
-            running_set.remove_from(visited_set)
             next_set.clear()
             if running_set.is_empty():
-                visited_set.save()
-                running_set.save()
+                print('Saving and exiting')
                 next_set.save()
+                running_set.save()
+                visited_set.save()
                 return
 
         except KeyboardInterrupt:
-            visited_set.save()
-            running_set.save()
+            print('Saving and exiting')
             next_set.save()
+            running_set.save()
+            visited_set.save()
             return
 
 if __name__ == '__main__':
-    #import pudb; pu.db
     explore()
