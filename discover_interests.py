@@ -1,6 +1,7 @@
 from pysocialwatcher import watcherAPI
 from time import time, localtime
 from lib import PersistentSet
+from string import ascii_lowercase
 
 watcher = watcherAPI()
 watcher.load_credentials_file('credentials.txt')
@@ -12,7 +13,7 @@ def explore():
     last_update = time()
 
     visited_set = PersistentSet('discovery/visited.txt')
-    running_set = PersistentSet('discovery/running.txt',{'Science'})
+    running_set = PersistentSet('discovery/running.txt',set(ascii_lowercase))
     next_set = PersistentSet('discovery/next.txt')
     while True:
         try:
