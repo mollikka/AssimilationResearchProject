@@ -1,3 +1,8 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
+
+import codecs
+
 class PersistentSet:
 
     def __init__(self, filename, my_set = None):
@@ -30,7 +35,7 @@ class PersistentSet:
         self._my_set -= other_set._my_set
 
     def save(self):
-        with open(self._filename, 'w') as out_file:
+        with codecs.open(self._filename, 'w', 'utf-8') as out_file:
             for item in self._my_set:
                 if item is not '': out_file.write(item + '\n')
 
