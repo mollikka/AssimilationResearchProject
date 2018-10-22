@@ -16,6 +16,9 @@ class PersistentSet:
             if my_set is not None:
                 self._my_set = my_set
 
+    def __contains__(self, value):
+        return value in self._my_set
+
     def __iter__(self):
         return self._my_set.__iter__()
 

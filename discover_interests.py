@@ -15,6 +15,9 @@ def explore():
     visited_set = PersistentSet('discovery/visited.txt')
     running_set = PersistentSet('discovery/running.txt',set(ascii_lowercase))
     next_set = PersistentSet('discovery/next.txt')
+
+    output_dataframe_file = 'discovery/dataframe.csv'
+
     while True:
         try:
             running_set.remove_from(visited_set)
@@ -29,6 +32,9 @@ def explore():
                 print(item)
                 try:
                     results = watcher.get_search_targeting_from_query_dataframe(item)
+                    results[( ~results['name'].str.encode('utf-8').isin(visited_set) ) &
+                            ( ~results['name'].str.encode('utf-8').isin(next_set) )
+                           ].to_csv(output_dataframe_file, mode='a', header=False, encoding='utf-8')
                     for result in results['name'].str.encode('utf-8'):
                         next_set.add(unicode(result, 'utf-8'))
                     visited_set.add(item)
