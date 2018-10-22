@@ -1,7 +1,11 @@
+import os
+
 from pysocialwatcher import watcherAPI
 from time import time, localtime
 from lib import PersistentSet
 from string import ascii_lowercase
+
+COLS = ('id','audience_size','name','path','type')
 
 watcher = watcherAPI()
 watcher.load_credentials_file('credentials.txt')
@@ -10,13 +14,27 @@ autosave_every_N_seconds = 60
 
 def explore():
 
+    def save():
+        next_set.save()
+        running_set.save()
+        visited_set.save()
+
     last_update = time()
 
-    visited_set = PersistentSet('discovery/visited.txt')
-    running_set = PersistentSet('discovery/running.txt',set(ascii_lowercase))
-    next_set = PersistentSet('discovery/next.txt')
+    working_folder = 'CACHE_interest_discovery'
 
-    output_dataframe_file = 'discovery/dataframe.csv'
+    visited_set = PersistentSet(working_folder+'/visited.txt')
+    running_set = PersistentSet(working_folder+'/running.txt',set(ascii_lowercase))
+    next_set = PersistentSet(working_folder+'/next.txt')
+
+    output_dataframe_file = working_folder+'/dataframe.csv'
+
+    if not os.path.isdir(working_folder):
+        os.makedirs(working_folder)
+
+    if not os.path.isfile(output_dataframe_file):
+        with open(output_dataframe_file,'w') as out_file:
+            out_file.write(','.join(COLS)+'\n')
 
     while True:
         try:
@@ -26,15 +44,13 @@ def explore():
                     last_update = time()
                     now = localtime()
                     print('Autosaving at {}.{}.{} {}.{}.{}'.format(now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
-                    visited_set.save()
-                    running_set.save()
-                    next_set.save()
+                    save()
                 print(item)
                 try:
                     results = watcher.get_search_targeting_from_query_dataframe(item)
                     results[( ~results['name'].str.encode('utf-8').isin(visited_set) ) &
                             ( ~results['name'].str.encode('utf-8').isin(next_set) )
-                           ].to_csv(output_dataframe_file, mode='a', header=False, encoding='utf-8')
+                           ].to_csv(output_dataframe_file, mode='a', encoding='utf-8', columns = COLS, header=False)
                     for result in results['name'].str.encode('utf-8'):
                         next_set.add(unicode(result, 'utf-8'))
                     visited_set.add(item)
@@ -42,20 +58,17 @@ def explore():
                     raise
                 except Exception as error:
                     print("ERROR:",error)
+                    raise
             running_set.add_from(next_set)
             next_set.clear()
             if running_set.is_empty():
-                print('Saving and exiting')
-                next_set.save()
-                running_set.save()
-                visited_set.save()
+                print('Exploration is finished!')
+                save()
                 return
 
         except KeyboardInterrupt:
             print('Saving and exiting')
-            next_set.save()
-            running_set.save()
-            visited_set.save()
+            save()
             return
 
 if __name__ == '__main__':
