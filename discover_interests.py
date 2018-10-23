@@ -18,12 +18,14 @@ def explore():
         next_set.save()
         running_set.save()
         visited_set.save()
+        saved_set.save()
 
     last_update = time()
 
     working_folder = 'CACHE_interest_discovery'
 
     visited_set = PersistentSet(working_folder+'/visited.txt')
+    saved_set = PersistentSet(working_folder+'/saved.txt')
     running_set = PersistentSet(working_folder+'/running.txt',set(ascii_lowercase))
     next_set = PersistentSet(working_folder+'/next.txt')
 
@@ -48,11 +50,12 @@ def explore():
                 print(item)
                 try:
                     results = watcher.get_search_targeting_from_query_dataframe(item)
-                    results[( ~results['name'].str.encode('utf-8').isin(visited_set) ) &
-                            ( ~results['name'].str.encode('utf-8').isin(next_set) )
+                    results = results[results.type == 'interests']
+                    results[ ~results['name'].str.encode('utf-8').isin(saved_set)
                            ].to_csv(output_dataframe_file, mode='a', encoding='utf-8', columns = COLS, header=False)
                     for result in results['name'].str.encode('utf-8'):
                         next_set.add(unicode(result, 'utf-8'))
+                        saved_set.add(unicode(result, 'utf-8'))
                     visited_set.add(item)
                 except KeyboardInterrupt:
                     raise
