@@ -11,7 +11,7 @@ class PersistentSet:
         try:
             with open(filename) as in_file:
                 for line in in_file.readlines():
-                    self._my_set.add(line.strip())
+                    self._my_set.add(unicode(line.strip(),'utf-8'))
         except:
             if my_set is not None:
                 self._my_set = my_set
