@@ -53,9 +53,12 @@ def explore():
                     results = results[results.type == 'interests']
                     results[ ~results['name'].str.encode('utf-8').isin(saved_set)
                            ].to_csv(output_dataframe_file, mode='a', encoding='utf-8', columns = COLS, header=False)
-                    for result in results['name'].str.encode('utf-8'):
-                        next_set.add(unicode(result, 'utf-8'))
-                        saved_set.add(unicode(result, 'utf-8'))
+                    for audience,name in zip(results['audience_size'],results['name'].str.encode('utf-8')):
+                        print(audience,unicode(name,'utf-8'))
+                        if audience > 100000:
+                        
+                            next_set.add(unicode(name, 'utf-8'))
+                        saved_set.add(unicode(name, 'utf-8'))
                     visited_set.add(item)
                 except KeyboardInterrupt:
                     raise
