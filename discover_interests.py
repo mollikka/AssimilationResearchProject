@@ -64,6 +64,7 @@ def explore():
                 except Exception as error:
                     print("ERROR:",error)
                     raise
+                print
             running_set.add_from(next_set)
             next_set.clear()
             if running_set.is_empty():
