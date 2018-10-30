@@ -1,0 +1,4 @@
+CACHE_*/*
+credentials.txt
+*.pyc
+*.csv
