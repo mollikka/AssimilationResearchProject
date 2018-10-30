@@ -63,7 +63,7 @@ def explore():
                     raise
                 except Exception as error:
                     print("ERROR:",error)
-                    raise
+                    continue
                 print
             running_set.add_from(next_set)
             next_set.clear()
