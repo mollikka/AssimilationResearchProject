@@ -77,7 +77,7 @@ def explore():
 			fb_id = line[1]['id']
 			# We only need the id
 			if (audience >= 10000000):
-				unvisited_set.add(fb_id)
+				unvisited_set.add(str(fb_id))
 
 	while True:
 		try:
