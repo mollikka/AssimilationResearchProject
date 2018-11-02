@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas
 
 from pysocialwatcher import watcherAPI
@@ -45,8 +46,8 @@ def explore():
 	'''
 	
 	# You can add more parameters here if you like
-	country = ['DE']
-	language = ['Arabic']
+	country = [sys.argv[1]]
+	language = []
 	behaviors = []
 
 	search_param = {
