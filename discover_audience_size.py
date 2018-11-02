@@ -95,7 +95,7 @@ def explore():
 					
 					results = watcher.get_search_targeting_from_query_dataframe(search_param)
 					results.to_csv(output_dataframe_file, mode='a', encoding='utf-8', header=False, columns=COLS)
-					visited_set.add(interest)
+					visited_set.add(str(interest))
 				except KeyboardInterrupt:
 					raise
 				except Exception as error:
