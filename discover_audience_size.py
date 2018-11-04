@@ -8,14 +8,11 @@ from time import time, localtime
 from lib import PersistentSet
 from string import ascii_lowercase
 
-COLS = ('id','audience_size','name','path','type')
-
 watcher = watcherAPI()
 watcher.load_credentials_file('credentials.txt')
 
-autosave_every_N_seconds = 60
 
-def explore():
+def collect():
 
 	def save():
 		unvisited_set.save()
@@ -24,8 +21,6 @@ def explore():
 	last_update = time()
 
 	working_folder = 'CACHE_audience_size'
-	unvisited_set = PersistentSet(working_folder+'/unvisited.txt')
-	visited_set = PersistentSet(working_folder+'/visited.txt')
 	
 	input_dataframe_file = 'CACHE_interest_discovery/dataframe.csv'
 	
@@ -45,19 +40,17 @@ def explore():
 	"age_max",
 	"geo_locations"					# country
 	'''
-	
-	# You can add more parameters here if you like
-	country = [sys.argv[1]]
-	language = []
-	behaviors = []
 
-	search_param = {
-	'geo_locations' : country,
-	'locales' : language,
-	'behaviors' : behaviors
-	}
+	def get_search_param(countries, interests):
+	    return {'name': ",".join(countries) + "_interest_collection",
+		    'geo_locations': [{'name':'countries', 'values': countries}],
+		    'ages_ranges': [{'min':18, 'max':50}],
+		    'genders': [0,1],
+		    'interests': [{ 'and':[i],
+				    'name':str(i)} for i in interests],
+		    }
 
-	output_dataframe_file = working_folder+'/audience_size_'+ '_'.join(",".join(i) for i in search_param.values() if len(i)>0) + '.csv'
+	countries = sys.argv[1].split(",")
 		
 	if not os.path.isdir(working_folder):
 		os.makedirs(working_folder)
@@ -67,53 +60,26 @@ def explore():
 		return
 		
 
-	if not os.path.isfile(output_dataframe_file):
-		print(output_dataframe_file)
-		with open(output_dataframe_file,'w') as out_file:
-			out_file.write(','.join(COLS)+'\n')
+	interests = []
+	data = pandas.read_csv(input_dataframe_file)
+	for line in data.iterrows():
+		audience = line[1]['audience_size']
+		fb_id = line[1]['id']
+		# We only need the id
+		if (audience >= 1000000):
+			interests.append(str(fb_id))
 
-	if unvisited_set.is_empty():
-		data = pandas.read_csv(input_dataframe_file)
-		for line in data.iterrows():
-			audience = line[1]['audience_size']
-			fb_id = line[1]['id']
-			# We only need the id
-			if (audience >= 10000000):
-				unvisited_set.add(str(fb_id))
+	search_param = get_search_param(countries, interests)
+	try:
+		watcher.check_input_integrity(search_param)
+		watcher.expand_input_if_requested(search_param)
+	except Exception:
+		print(Exception)
+		exit()
 
-	while True:
-		try:
-			unvisited_set.remove_from(visited_set)
-			for interest in unvisited_set:
-				if time() > last_update + autosave_every_N_seconds:
-					last_update = time()
-					now = localtime()
-					print('Autosaving at {}.{}.{} {}.{}.{}'.format(now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec))
-					save()
-				print(interest)
-				search_param['interests'] = [interest]
-				
-				try:
-					
-					results = watcher.get_search_targeting_from_query_dataframe(search_param)
-					results.to_csv(output_dataframe_file, mode='a', encoding='utf-8', header=False, columns=COLS)
-					visited_set.add(str(interest))
-				except KeyboardInterrupt:
-					raise
-				except Exception as error:
-					print("ERROR:",error)
-					continue
-				print
-			if unvisited_set.is_empty():
-				print('Exploration is finished!')
-				save()
-				return
-
-		except KeyboardInterrupt:
-			print('Saving and exiting')
-			save()
-			return
+	collection_df = watcher.build_collection_dataframe(search_param)
+	results = watcher.perform_collection_data_on_facebook(collection_df)
 
 if __name__ == '__main__':
-	explore()
+	collect()
 
