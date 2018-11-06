@@ -43,11 +43,11 @@ def collect():
 
 	def get_search_param(countries, interests):
 	    return {'name': ",".join(countries) + "_interest_collection",
-		    'geo_locations': [{'name':'countries', 'values': countries}],
-		    'ages_ranges': [{'min':18, 'max':50}],
-		    'genders': [0,1],
+		    'geo_locations': [{'name':'countries', 'values': [i]} for i in countries],
+		    'ages_ranges': [{'min':18, 'max':65}],
+		    'genders': [0],
 		    'interests': [{ 'and':[i],
-				    'name':str(i)} for i in interests],
+				    'name':[str(i)]} for i in interests],
 		    }
 
 	countries = sys.argv[1].split(",")
