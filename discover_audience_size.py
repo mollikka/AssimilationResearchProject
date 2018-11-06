@@ -4,13 +4,14 @@ import sys
 import pandas
 
 from pysocialwatcher import watcherAPI
+from pysocialwatcher.utils import load_dataframe_from_file
 from time import time, localtime
 from lib import PersistentSet
 from string import ascii_lowercase
 
 watcher = watcherAPI()
 watcher.load_credentials_file('credentials.txt')
-
+watcher.config(save_every=1)
 
 def collect():
 
@@ -77,7 +78,13 @@ def collect():
 		print(Exception)
 		exit()
 
-	collection_df = watcher.build_collection_dataframe(search_param)
+	if len(sys.argv) > 2:
+		#restart previous collection
+		collection_df = load_dataframe_from_file(sys.argv[2])	
+	else:
+		#start from scratch
+		collection_df = watcher.build_collection_dataframe(search_param)
+	
 	results = watcher.perform_collection_data_on_facebook(collection_df)
 
 if __name__ == '__main__':
