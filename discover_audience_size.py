@@ -13,6 +13,8 @@ watcher = watcherAPI()
 watcher.load_credentials_file('credentials.txt')
 watcher.config(save_every=1)
 
+EXPAT = 6015559470583
+
 def collect():
 
 	def save():
@@ -47,6 +49,8 @@ def collect():
 		    'geo_locations': [{'name':'countries', 'values': [i]} for i in countries],
 		    'ages_ranges': [{'min':18, 'max':65}],
 		    'genders': [0],
+		    'behavior': [{'or': [EXPAT], 'name': 'Ex-pat'},
+				 {'not': [EXPAT], 'name': 'Not ex-pat'}],
 		    'interests': [{ 'and':[i],
 				    'name':[str(i)]} for i in interests],
 		    }
