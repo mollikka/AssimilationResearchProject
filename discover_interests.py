@@ -55,8 +55,7 @@ def explore():
                            ].to_csv(output_dataframe_file, mode='a', encoding='utf-8', columns = COLS, header=False)
                     for audience,name in zip(results['audience_size'],results['name'].str.encode('utf-8')):
                         print(str(audience) + ' ' + unicode(name,'utf-8'))
-                        if audience > 100000:
-                            next_set.add(unicode(name, 'utf-8'))
+                        next_set.add(unicode(name, 'utf-8'))
                         saved_set.add(unicode(name, 'utf-8'))
                     visited_set.add(item)
                 except KeyboardInterrupt:
