@@ -61,7 +61,7 @@ def collect():
 		    'ages_ranges': [{'min':18, 'max':65}],
 			    "languages":[{"name" : "Arabic", "values" : [28]}],
 		    'genders': [0],
-		    'behavior': [{'or': [EXPAT], 'name': 'Ex-pat'},
+		    'behavior': [{'or': [EXPAT], 'name': 'Ex-pat'}],
 				#[{'or': [expat_koodi[maakoodi]], 'name': maakoodi} for maakoodi in arglist]
 				 #{'not': [EXPAT], 'name': 'Not ex-pat'}],
 		    'interests': [{ 'and':[i],
