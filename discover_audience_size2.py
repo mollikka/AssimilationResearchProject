@@ -59,11 +59,11 @@ def collect():
 	    return {'name': ",".join(countries) + "_interest_collection",
 		    'geo_locations': [{'name':'countries', 'values': [i]} for i in countries],
 		    'ages_ranges': [{'min':18, 'max':65}],
-			    "languages":[{"name" : "Arabic", "values" : [28]}],
-		    'genders': [0],
-		    'behavior': [{'or': [EXPAT], 'name': 'Ex-pat'}],
+
+		    'genders': [1, 2],
+		    'behavior': [ #{'or': [EXPAT], 'name': 'Ex-pat'}],
 				#[{'or': [expat_koodi[maakoodi]], 'name': maakoodi} for maakoodi in arglist]
-				 #{'not': [EXPAT], 'name': 'Not ex-pat'}],
+				 {'not': [EXPAT], 'name': 'Not ex-pat'}],
 		    'interests': [{ 'and':[i],
 				    'name':[str(i)]} for i in interests],
 		    }
