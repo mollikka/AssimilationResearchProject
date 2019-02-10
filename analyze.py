@@ -17,17 +17,26 @@ else:
 SPECIFIC_DATAFRAME_FOLDER = DATAFRAME_FOLDER + '/specific_data'
 GLOBAL_DATAFRAME_FOLDER = DATAFRAME_FOLDER + '/global_data'
 
-def get_global_interest_dict_id_to_name(filename):
+def get_global_interest_dict_id_to_name():
 
     global_interests = pandas.read_csv(GLOBAL_DATAFRAME_FOLDER + '/dataframe_interest_names.csv')
 
     interest_id_to_name = {}
-    global_mau = {}
 
     for index, row in global_interests.iterrows():
         interest_id_to_name[row['id']] = row['name']
 
     return interest_id_to_name
+
+def get_global_interest_dict_id_to_audience():
+
+    global_interests = pandas.read_csv(GLOBAL_DATAFRAME_FOLDER + '/dataframe_interest_names.csv')
+
+    interest_id_to_audience = {}
+    for index, row in global_interests.iterrows():
+        interest_id_to_audience[row['id']] = row['audience_size']
+
+    return interest_id_to_audience
 
 def load_dataframes():
     #https://stackoverflow.com/questions/10545957/creating-pandas-data-frame-from-multiple-files
@@ -90,9 +99,12 @@ data = load_dataframes()
 
 data = generate_helper_columns_on_dataframe(data)
 
+global_audience = get_global_interest_dict_id_to_audience()
+
 def get_interest_vectors(data):
 
     vectors = []
+    included = set()
     countries = data.location_id.unique()
 
     print('Found data for countries:', ','.join(countries))
@@ -121,12 +133,88 @@ def get_interest_vectors(data):
 
                 for gender in genders:
 
+                    set_key = (country, expat_status, language or 'All', gender)
+                    if set_key in included: continue
                     data_c_e_l_g = data_c_e_l[data_c_e_l['gender_id'] == gender]
-                    interest_vector = [(country, expat_status, language or 'All', gender),
-                                            data_c_e_l]
+                    data_c_e_l_g = data_c_e_l_g.drop_duplicates('interest_id',keep='first')
+                    sorted_interests = data_c_e_l_g.sort_values('interest_id')
+                    #sorted_interests_relative = [sorted_interests.iloc[i]['mau_audience']/float(global_audience[int(sorted_interests.iloc[i]['interest_id'])])
+                    #                                if sorted_interests.iloc[i]['mau_audience']>1000 else None for i in range(len(sorted_interests))]
+                    sorted_interests_relative = [sorted_interests.iloc[i]['mau_audience']/float(sum(sorted_interests['mau_audience']))
+                                                    if sorted_interests.iloc[i]['mau_audience']>1000 else None for i in range(len(sorted_interests))]
+                    interest_vector = [set_key, sorted_interests_relative]
+                    included.add(set_key)
                     print('\t'*2,country,expat_status,language or 'All languages',gender,len(data_c_e_l_g))
+
+                    vectors.append(interest_vector)
 
     return vectors
 
+
+
+def accept_index(i, vector1, vector2):
+    return (vector1[i] is not None) and (vector2[i] is not None)
+
+def count_acceptable_rows(vector1, vector2):
+    return len([i for i in range(len(vector1)) if accept_index(i, vector1, vector2)])
+
+def cosine_similarity(vector1, vector2):
+    def magnitude(vector):
+        return numpy.sqrt(sum(vector[i]**2 for i in range(len(vector)) if accept_index(i, vector1, vector2)))
+
+    if (len(vector1) != len(vector2)):
+        return -1
+
+    if (magnitude(vector1) == 0) or (magnitude(vector2) == 0):
+        return -1
+
+    return float(sum(vector1[i]*vector2[i] for i in range(len(vector1)) if accept_index(i, vector1, vector2))) /    \
+        float(magnitude(vector1)*magnitude(vector2))
+
+'''
+def assimilation_score(vector1, vector2):
+    target = vector1
+    dest = vector2
+
+    #assimilation score per interest
+    scores = [target[i]/dest[i] if accept_index(i, target, dest) else None for i in range(len(vector1))]
+
+    #sort by prevalence in destination country
+    sorted_scores = [i[0] for i in sorted(zip(scores, dest), key=lambda x: x[1]) if i[0] is not None]
+
+    #
+    return sorted_scores[len(sorted_scores)/2]
+'''
+
+def compare(vector1, vector2):
+    vectorname1, vectordata1 = vector1
+    vectorname2, vectordata2 = vector2
+
+    print(vectorname1)
+    print(vectorname2)
+
+    A = cosine_similarity(vectordata1, vectordata2)
+    print(A)
+
 vectors = get_interest_vectors(data)
+
+mypairs_collection = []
+for i in vectors:
+    mypairs = []
+    for j in vectors:
+        #if i[0][3] != j[0][3]: continue #reject different gender demo pairs
+        #if i[0][0] != j[0][0]: continue #reject different country demo pairs
+        #print(pairs[-1])
+        mypairs.append( (cosine_similarity(i[1],j[1]), count_acceptable_rows(i[1],j[1])) )
+    mypairs_collection.append(mypairs)
+
+with open("output_cosine_similarity", "w") as out_file:
+    out_file.write(";"+";".join(str(i[0]) for i in vectors))
+    for vec,pairs in zip(vectors,mypairs_collection):
+        out_file.write(str(vec[0]) + ";" + ";".join(str(i[0]) if i[1]>600 else "N/A" for i in pairs)+"\n")
+
+with open("output_acceptable_interests", "w") as out_file:
+    out_file.write(";"+";".join(str(i[0]) for i in vectors))
+    for vec,pairs in zip(vectors,mypairs_collection):
+        out_file.write(str(vec[0]) + ";" + ";".join(str(i[1]) for i in pairs)+"\n")
 
