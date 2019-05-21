@@ -341,33 +341,23 @@ vectors = [i for i in vectors if
 ''''''
 vectors = [(("Global"),global_audience_vector)] + vectors
 '''
+def generate_country_comparison_matrix(nations, vectors):
+
+  #Generate cosine similarity matrix
+  mypairs_collection = []
+  for i in vectors:
+      mypairs = []
+      for j in vectors:
+          mypairs.append( (cosine_similarity(i[1],j[1]), count_acceptable_rows(i[1],j[1]), assimilation_score2(i[1],j[1]) ))
+      mypairs_collection.append(mypairs)
+
+  return mypairs_collection
 
 nations = ['GB','NL','CH','FI','IT','SE','HU','AT','FR','DE']
 vectors = [i for i in vectors if i[0][0] in nations]
 
-#Generate cosine similarity matrix
-mypairs_collection = []
-for i in vectors:
-    mypairs = []
-    for j in vectors:
-        mypairs.append( (cosine_similarity(i[1],j[1]), count_acceptable_rows(i[1],j[1]), assimilation_score2(i[1],j[1]) ))
-    mypairs_collection.append(mypairs)
-'''
-#Generate assimilation matrix
-countries = data.location_id.unique()
-assimilation_pairs_collection = []
-for home_country in countries:
-    mypairs = []
-    for destination_country in countries:
-        try:
-            target_native = get_vector(vectors, destination_country, "Not ex-pat", "All", "All")
-            target_expat = get_vector(vectors, destination_country, "Ex-pat", "All", "All")
-            home = get_vector(vectors, home_country, "Not ex-pat", "All", "All")
-            result = assimilation_score(target_native, target_expat, home)
-        except IndexError:
-            result = "N/A"
-        mypairs.append(result)
-    assimilation_pairs_collection.append(mypairs)
+mypairs_collection = generate_country_comparison_matrix(nations, vectors)
+
 '''
 
 with open("output_cosine_similarity.csv", "w") as out_file:
@@ -412,7 +402,6 @@ for nation in nations:
         for vec,pairs in zip(vs,mypairs_collection):
             out_file.write(",".join(vec[0]) + " & " + " & ".join("{0:.2f}".format(i[0]) if i[1]>600 else "N/A" for i in pairs)+"\n")
 
-'''
 with open("output_assimilation_pairs.csv", "w") as out_file:
     out_file.write(";"+";".join(countries) + "\n")
     for country,pairs in zip(countries,assimilation_pairs_collection):
